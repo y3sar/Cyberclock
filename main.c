@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
@@ -8,6 +9,7 @@
 #define SCREEN_HEIGHT 300
 
 int init_system();
+void tick();
 
 SDL_Renderer* main_renderer = NULL;
 SDL_Window* main_window = NULL;
@@ -17,12 +19,28 @@ SDL_Window* main_window = NULL;
 
 Component ClockBackground;
 
-Component ClockHand;;
+Component ClockHand;
+
 
 
 int main(){
 	init_system();
+
 	init_component(&ClockBackground, "assets/clock.png", main_renderer, NULL, 0, NULL);
+
+	SDL_Rect clockhand_pos;
+
+	init_component(&ClockHand, "assets/clockhand.png", main_renderer, &clockhand_pos, 0, NULL);
+
+	SDL_QueryTexture(ClockHand.texture, NULL, NULL, &clockhand_pos.w, &clockhand_pos.h);
+	clockhand_pos.w /= 2;
+	clockhand_pos.h /= 2;
+	clockhand_pos.x = (SCREEN_WIDTH/2) - clockhand_pos.w/2;
+	clockhand_pos.y = (SCREEN_HEIGHT/2) - clockhand_pos.h - 30;
+
+	SDL_Point clockhand_pivotpoint = {(clockhand_pos.w/2), (clockhand_pos.h+35)};
+	ClockHand.dst_rect = &clockhand_pos;
+	ClockHand.center_pos = &clockhand_pivotpoint;
 
 	int quit = 0;
 	SDL_Event e;
@@ -34,14 +52,26 @@ int main(){
 			}
 		}
 
+		tick(&ClockHand);
+
 		SDL_RenderClear(main_renderer);
 		render_component(&ClockBackground);
+		render_component(&ClockHand);
 		SDL_RenderPresent(main_renderer);
 		
 	}
 }
 
 
+void tick(Component* clockhand){
+
+	struct tm* timenow;
+	time_t rawtime;
+	time(&rawtime);
+	timenow = localtime(&rawtime);
+	clockhand->angle = timenow->tm_sec * 6;
+
+}
 
 
 
