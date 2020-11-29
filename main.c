@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include "component.h" 
 
 #define SCREEN_WIDTH 300
@@ -21,6 +22,8 @@ Component ClockBackground;
 
 Component ClockHand;
 
+TextComponent TimeLabel;
+
 
 
 int main(){
@@ -31,6 +34,12 @@ int main(){
 	SDL_Rect clockhand_pos;
 
 	init_component(&ClockHand, "assets/clockhand.png", main_renderer, &clockhand_pos, 0, NULL);
+
+	SDL_Color text_color = {255, 255, 255};
+	SDL_Rect text_pos = {50, 50, 50,50};
+	TTF_Font* text_style = TTF_OpenFont("sourcecode.ttf", 14);
+
+	init_text_component(&TimeLabel, "", text_style, text_color, main_renderer, &text_pos);
 
 	SDL_QueryTexture(ClockHand.texture, NULL, NULL, &clockhand_pos.w, &clockhand_pos.h);
 	clockhand_pos.w /= 2;
@@ -52,24 +61,26 @@ int main(){
 			}
 		}
 
-		tick(&ClockHand);
+		tick(&ClockHand, &TimeLabel);
 
 		SDL_RenderClear(main_renderer);
 		render_component(&ClockBackground);
 		render_component(&ClockHand);
+		render_text_component(&TimeLabel);
 		SDL_RenderPresent(main_renderer);
 		
 	}
 }
 
-
-void tick(Component* clockhand){
+// rotates the clockhand by the second
+void tick(Component* clockhand, TextComponent* timelabel){
 
 	struct tm* timenow;
 	time_t rawtime;
 	time(&rawtime);
 	timenow = localtime(&rawtime);
 	clockhand->angle = timenow->tm_sec * 6;
+	change_text(timelabel, asctime(timenow));
 
 }
 
